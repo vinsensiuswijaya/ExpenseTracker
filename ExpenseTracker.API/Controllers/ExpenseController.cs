@@ -1,5 +1,7 @@
 using ExpenseTracker.API.DTOs;
+using ExpenseTracker.API.Interfaces;
 using ExpenseTracker.API.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,8 +20,9 @@ namespace ExpenseTracker.API.Controllers
             _categoriesService = categoriesService;
         }
 
+        [Authorize]
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<ExpenseDTO>>> GetExpenses()
+        public async Task<ActionResult<IEnumerable<ExpenseDto>>> GetExpenses()
         {
             var expenses = await _expensesService.GetAllAsync();
             expenses.OrderBy(e => e.Id);
@@ -27,8 +30,9 @@ namespace ExpenseTracker.API.Controllers
             return Ok(expenses);
         }
 
+        [Authorize]
         [HttpGet("{id}")]
-        public async Task<ActionResult<ExpenseDTO>> GetExpense(int id)
+        public async Task<ActionResult<ExpenseDto>> GetExpense(int id)
         {
             var expense = await _expensesService.GetByIdAsync(id);
             
@@ -38,8 +42,9 @@ namespace ExpenseTracker.API.Controllers
             return Ok(expense);
         }
 
+        [Authorize]
         [HttpPost]
-        public async Task<ActionResult<ExpenseDTO>> CreateExpense(ExpenseDTO expenseDto)
+        public async Task<ActionResult<ExpenseDto>> CreateExpense(ExpenseDto expenseDto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -49,8 +54,9 @@ namespace ExpenseTracker.API.Controllers
             return CreatedAtAction(nameof(GetExpense), new { id = expenseDto.Id}, expenseDto);
         }
 
+        [Authorize]
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateExpense(int id, ExpenseDTO expenseDto)
+        public async Task<IActionResult> UpdateExpense(int id, ExpenseDto expenseDto)
         {
             if (id != expenseDto.Id)
                 return BadRequest();
@@ -63,6 +69,7 @@ namespace ExpenseTracker.API.Controllers
             return Ok(expenseDto);
         }
 
+        [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteExpense(int id)
         {
@@ -76,8 +83,9 @@ namespace ExpenseTracker.API.Controllers
             return Ok();
         }
 
+        [Authorize]
         [HttpGet("chart")]
-        public async Task<ActionResult<IEnumerable<ExpenseChartDataDTO>>> GetChartData()
+        public async Task<ActionResult<IEnumerable<ExpenseChartDataDto>>> GetChartData()
         {
             var data = await _expensesService.GetChartDataAsync();
             return Ok(data);

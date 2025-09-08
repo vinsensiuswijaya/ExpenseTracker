@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using ExpenseTracker.API.Data;
 using ExpenseTracker.API.DTOs;
+using ExpenseTracker.API.Interfaces;
 using ExpenseTracker.API.Models;
 using ExpenseTracker.API.Repositories;
 
@@ -19,7 +20,7 @@ public class ExpensesService : IExpensesService
         _expenseRepository = new ExpenseRepository(_context);
     }
 
-    public async Task AddAsync(ExpenseDTO expenseDto)
+    public async Task AddAsync(ExpenseDto expenseDto)
     {
         var expense = _mapper.Map<Expense>(expenseDto);
         if (expense.Date.Kind == DateTimeKind.Unspecified)
@@ -31,7 +32,7 @@ public class ExpensesService : IExpensesService
         await _context.SaveChangesAsync();
     }
 
-    public async Task EditAsync(ExpenseDTO updatedExpenseDto)
+    public async Task EditAsync(ExpenseDto updatedExpenseDto)
     {
         var existingExpense = await _expenseRepository.GetByIdAsync(updatedExpenseDto.Id);
         
@@ -56,19 +57,19 @@ public class ExpensesService : IExpensesService
         }
     }
  
-    public async Task<IEnumerable<ExpenseDTO>> GetAllAsync()
+    public async Task<IEnumerable<ExpenseDto>> GetAllAsync()
     {
         var expenses = await _expenseRepository.GetAllAsync();
-        return _mapper.Map<IEnumerable<ExpenseDTO>>(expenses);
+        return _mapper.Map<IEnumerable<ExpenseDto>>(expenses);
     }
 
-    public async Task<ExpenseDTO> GetByIdAsync(int id)
+    public async Task<ExpenseDto> GetByIdAsync(int id)
     {
         var expense = await _expenseRepository.GetByIdAsync(id);
-        return expense == null ? null : _mapper.Map<ExpenseDTO>(expense);
+        return expense == null ? null : _mapper.Map<ExpenseDto>(expense);
     }
 
-    public async Task<IEnumerable<ExpenseChartDataDTO>> GetChartDataAsync()
+    public async Task<IEnumerable<ExpenseChartDataDto>> GetChartDataAsync()
     {
         var data = await _expenseRepository.GetChartDataAsync();
         return data;

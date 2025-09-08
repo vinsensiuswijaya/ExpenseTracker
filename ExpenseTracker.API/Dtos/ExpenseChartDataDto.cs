@@ -1,6 +1,6 @@
 ﻿namespace ExpenseTracker.API.DTOs;
 
-public class ExpenseChartDataDTO
+public class ExpenseChartDataDto
 {
     public string Category { get; set; }
     public double Total { get; set; }

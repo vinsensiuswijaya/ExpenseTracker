@@ -1,6 +1,6 @@
 ﻿namespace ExpenseTracker.API.DTOs;
 
-public class ExpenseDTO
+public class ExpenseDto
 {
     public int Id { get; set; }
     public string Description { get; set; } = null!;

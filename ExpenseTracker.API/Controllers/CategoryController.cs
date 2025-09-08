@@ -1,5 +1,6 @@
 using ExpenseTracker.API.DTOs;
-using ExpenseTracker.API.Services;
+using ExpenseTracker.API.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,15 +17,17 @@ namespace ExpenseTracker.API.Controllers
             _categoriesService = categoriesService;
         }
 
+        [Authorize]
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<CategoryDTO>>> GetCategories()
+        public async Task<ActionResult<IEnumerable<CategoryDto>>> GetCategories()
         {
             var categories = await _categoriesService.GetAllAsync();
             return Ok(categories.OrderBy(c => c.Id) );
         }
 
+        [Authorize]
         [HttpGet("{id}")]
-        public async Task<ActionResult<CategoryDTO>> GetCategory(int id)
+        public async Task<ActionResult<CategoryDto>> GetCategory(int id)
         {
             var category = await _categoriesService.GetByIdAsync(id);
 
@@ -34,8 +37,9 @@ namespace ExpenseTracker.API.Controllers
             return Ok(category);
         }
 
+        [Authorize]
         [HttpPost]
-        public async Task<ActionResult<CategoryDTO>> CreateCategory(CategoryDTO categoryDto)
+        public async Task<ActionResult<CategoryDto>> CreateCategory(CategoryDto categoryDto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -45,8 +49,9 @@ namespace ExpenseTracker.API.Controllers
             return CreatedAtAction(nameof(GetCategory), new { id = categoryDto.Id }, categoryDto);
         }
 
+        [Authorize]
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateCategory(int id, CategoryDTO categoryDto)
+        public async Task<IActionResult> UpdateCategory(int id, CategoryDto categoryDto)
         {
             if (id != categoryDto.Id)
                 return BadRequest();
@@ -59,6 +64,7 @@ namespace ExpenseTracker.API.Controllers
             return Ok(categoryDto);
         }
 
+        [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCategory(int id)
         {

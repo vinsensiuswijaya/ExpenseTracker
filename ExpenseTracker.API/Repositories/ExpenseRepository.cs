@@ -20,7 +20,7 @@ public class ExpenseRepository : GenericRepository<Expense>, IExpenseRepository
             .FirstOrDefaultAsync(e => e.Id == id);
     }
 
-    public async Task<IEnumerable<ExpenseChartDataDTO>> GetChartDataAsync()
+    public async Task<IEnumerable<ExpenseChartDataDto>> GetChartDataAsync()
     {
         var expenses = await _context.Expenses
             .Include(e => e.Category)
@@ -28,7 +28,7 @@ public class ExpenseRepository : GenericRepository<Expense>, IExpenseRepository
 
         var data = expenses
             .GroupBy(e => e.Category.Name)
-            .Select(g => new ExpenseChartDataDTO
+            .Select(g => new ExpenseChartDataDto
             {
                 Category = g.Key,
                 Total = g.Sum(e => e.Amount)

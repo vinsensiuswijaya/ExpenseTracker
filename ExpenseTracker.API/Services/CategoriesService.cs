@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using ExpenseTracker.API.Data;
 using ExpenseTracker.API.DTOs;
+using ExpenseTracker.API.Interfaces;
 using ExpenseTracker.API.Models;
 using ExpenseTracker.API.Repositories;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -20,14 +21,14 @@ public class CategoriesService : ICategoriesService
         _categoryRepository = new CategoryRepository(context);
     }
 
-    public async Task AddAsync(CategoryDTO categoryDto)
+    public async Task AddAsync(CategoryDto categoryDto)
     {
         var category = _mapper.Map<Category>(categoryDto);
         await _categoryRepository.AddAsync(category);
         await _context.SaveChangesAsync();
     }
 
-    public async Task EditAsync(CategoryDTO updatedCategoryDto)
+    public async Task EditAsync(CategoryDto updatedCategoryDto)
     {
         var category = _mapper.Map<Category>(updatedCategoryDto);
         _categoryRepository.Update(category);
@@ -45,15 +46,15 @@ public class CategoriesService : ICategoriesService
         }
     }
     
-    public async Task<IEnumerable<CategoryDTO>> GetAllAsync()
+    public async Task<IEnumerable<CategoryDto>> GetAllAsync()
     {
         var categories = await _categoryRepository.GetAllAsync();
-        return _mapper.Map<IEnumerable<CategoryDTO>>(categories);
+        return _mapper.Map<IEnumerable<CategoryDto>>(categories);
     }
 
-    public async Task<CategoryDTO> GetByIdAsync(int id)
+    public async Task<CategoryDto> GetByIdAsync(int id)
     {
         var category = await _categoryRepository.GetByIdAsync(id);
-        return category == null ? null : _mapper.Map<CategoryDTO>(category);
+        return category == null ? null : _mapper.Map<CategoryDto>(category);
     }
 }

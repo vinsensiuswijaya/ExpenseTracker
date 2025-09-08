@@ -8,7 +8,7 @@ public class CategoryMappingProfile : Profile
 {
     public CategoryMappingProfile()
     {
-        CreateMap<Category, CategoryDTO>();
-        CreateMap<CategoryDTO, Category>();
+        CreateMap<Category, CategoryDto>();
+        CreateMap<CategoryDto, Category>();
     }
 }

@@ -5,5 +5,5 @@ namespace ExpenseTracker.API.Repositories;
 
 public interface IExpenseRepository : IGenericRepository<Expense>
 {
-    public Task<IEnumerable<ExpenseChartDataDTO>> GetChartDataAsync();
+    public Task<IEnumerable<ExpenseChartDataDto>> GetChartDataAsync();
 }
