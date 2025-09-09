@@ -62,8 +62,8 @@ namespace ExpenseTracker.API.Controllers
         [HttpPost]
         public async Task<ActionResult<ExpenseDto>> CreateExpense(CreateExpenseDto createExpenseDto)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            // if (!ModelState.IsValid)
+            //     return BadRequest(ModelState);
             
             var userId = GetCurrentUserId();
             var result = await _expensesService.AddAsync(createExpenseDto, userId);
@@ -78,8 +78,8 @@ namespace ExpenseTracker.API.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateExpense(int id, CreateExpenseDto updateExpenseDto)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            // if (!ModelState.IsValid)
+            //     return BadRequest(ModelState);
             
             var userId = GetCurrentUserId();
             var result = await _expensesService.EditAsync(id, updateExpenseDto, userId);

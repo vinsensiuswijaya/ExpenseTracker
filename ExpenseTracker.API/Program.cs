@@ -8,6 +8,7 @@ using ExpenseTracker.API.Services;
 using ExpenseTracker.API.Validators;
 using Microsoft.EntityFrameworkCore;
 using FluentValidation;
+using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.JsonWebTokens;
@@ -67,11 +68,11 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
 
 builder.Services.AddAuthentication(options =>
 {
-    options.DefaultAuthenticateScheme = 
-    options.DefaultChallengeScheme = 
-    options.DefaultForbidScheme = 
-    options.DefaultScheme = 
-    options.DefaultSignInScheme = 
+    options.DefaultAuthenticateScheme =
+    options.DefaultChallengeScheme =
+    options.DefaultForbidScheme =
+    options.DefaultScheme =
+    options.DefaultSignInScheme =
     options.DefaultSignOutScheme = JwtBearerDefaults.AuthenticationScheme;
 }).AddJwtBearer(options =>
 {
@@ -90,8 +91,8 @@ builder.Services.AddAuthentication(options =>
 });
 
 // Register FluentValidation validators
-builder.Services.AddScoped<IValidator<ExpenseDto>, ExpenseValidator>();
-builder.Services.AddScoped<IValidator<CategoryDto>, CategoryValidator>();
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 // Register AutoMapper
 builder.Services.AddAutoMapper(cfg => { }, typeof(Program).Assembly);

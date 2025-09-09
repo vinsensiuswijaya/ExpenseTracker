@@ -3,9 +3,9 @@ using FluentValidation;
 
 namespace ExpenseTracker.API.Validators;
 
-public class ExpenseValidator : AbstractValidator<ExpenseDto>
+public class CreateExpenseValidator : AbstractValidator<CreateExpenseDto>
 {
-    public ExpenseValidator()
+    public CreateExpenseValidator()
     {
         RuleFor(e => e.Description)
             .NotEmpty().WithMessage("Description is required!")

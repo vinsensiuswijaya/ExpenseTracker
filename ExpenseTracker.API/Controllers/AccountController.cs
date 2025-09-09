@@ -26,14 +26,14 @@ namespace ExpenseTracker.API.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginDto loginDto)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-            
+            // if (!ModelState.IsValid)
+            //     return BadRequest(ModelState);
+
             var user = await _userManager.Users.FirstOrDefaultAsync(x => x.UserName == loginDto.Username);
-            
+
             if (user == null)
                 return Unauthorized("Invalid username!");
-            
+
             var result = await _signInManager.CheckPasswordSignInAsync(user, loginDto.Password, false);
 
             if (!result.Succeeded)
@@ -52,15 +52,15 @@ namespace ExpenseTracker.API.Controllers
         {
             try
             {
-                if (!ModelState.IsValid)
-                    return BadRequest(ModelState);
+                // if (!ModelState.IsValid)
+                //     return BadRequest(ModelState);
 
                 var user = new User
                 {
                     UserName = registerDto.Username,
                     Email = registerDto.Email
                 };
-                
+
                 var createdUser = await _userManager.CreateAsync(user, registerDto.Password);
 
                 if (createdUser.Succeeded)
@@ -84,7 +84,7 @@ namespace ExpenseTracker.API.Controllers
                 {
                     return StatusCode(500, createdUser.Errors);
                 }
-                    
+
             }
             catch (Exception e)
             {

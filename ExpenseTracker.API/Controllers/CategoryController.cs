@@ -25,10 +25,10 @@ namespace ExpenseTracker.API.Controllers
 
             if (string.IsNullOrWhiteSpace(userId))
                 throw new UnauthorizedAccessException("User ID not found in token.");
-            
+
             return userId;
         }
-        
+
 
         [Authorize]
         [HttpGet]
@@ -52,7 +52,7 @@ namespace ExpenseTracker.API.Controllers
 
             if (!result.IsSuccess)
                 return NotFound(result.Error);
-            
+
             return Ok(result.Value);
         }
 
@@ -60,15 +60,15 @@ namespace ExpenseTracker.API.Controllers
         [HttpPost]
         public async Task<ActionResult<CategoryDto>> CreateCategory(CreateCategoryDto createCategoryDto)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-            
+            // if (!ModelState.IsValid)
+            //     return BadRequest(ModelState);
+
             var userId = GetCurrentUserId();
             var result = await _categoriesService.AddAsync(createCategoryDto, userId);
 
             if (!result.IsSuccess)
                 return BadRequest(result.Error);
-            
+
             return CreatedAtAction(nameof(GetCategory), new { id = result.Value.Id }, result.Value);
         }
 
@@ -76,8 +76,8 @@ namespace ExpenseTracker.API.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateCategory(int id, CreateCategoryDto updateCategoryDto)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            // if (!ModelState.IsValid)
+            //     return BadRequest(ModelState);
 
             var userId = GetCurrentUserId();
             var result = await _categoriesService.EditAsync(id, updateCategoryDto, userId);
