@@ -60,9 +60,6 @@ namespace ExpenseTracker.API.Controllers
         [HttpPost]
         public async Task<ActionResult<CategoryDto>> CreateCategory(CreateCategoryDto createCategoryDto)
         {
-            // if (!ModelState.IsValid)
-            //     return BadRequest(ModelState);
-
             var userId = GetCurrentUserId();
             var result = await _categoriesService.AddAsync(createCategoryDto, userId);
 
@@ -76,9 +73,6 @@ namespace ExpenseTracker.API.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateCategory(int id, CreateCategoryDto updateCategoryDto)
         {
-            // if (!ModelState.IsValid)
-            //     return BadRequest(ModelState);
-
             var userId = GetCurrentUserId();
             var result = await _categoriesService.EditAsync(id, updateCategoryDto, userId);
 

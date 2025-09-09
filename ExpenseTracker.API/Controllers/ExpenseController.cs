@@ -14,7 +14,7 @@ namespace ExpenseTracker.API.Controllers
     {
         private readonly IExpensesService _expensesService;
         private readonly ICategoriesService _categoriesService;
-        
+
         public ExpenseController(IExpensesService expensesService, ICategoriesService categoriesService)
         {
             _expensesService = expensesService;
@@ -25,7 +25,7 @@ namespace ExpenseTracker.API.Controllers
         {
             string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
                             User.FindFirst("sub")?.Value;
-            
+
             if (string.IsNullOrWhiteSpace(userId))
                 throw new UnauthorizedAccessException("User ID not found in token.");
 
@@ -51,7 +51,7 @@ namespace ExpenseTracker.API.Controllers
         {
             var userId = GetCurrentUserId();
             var result = await _expensesService.GetByIdAsync(id, userId);
-            
+
             if (!result.IsSuccess)
                 return NotFound(result.Error);
 
@@ -62,15 +62,12 @@ namespace ExpenseTracker.API.Controllers
         [HttpPost]
         public async Task<ActionResult<ExpenseDto>> CreateExpense(CreateExpenseDto createExpenseDto)
         {
-            // if (!ModelState.IsValid)
-            //     return BadRequest(ModelState);
-            
             var userId = GetCurrentUserId();
             var result = await _expensesService.AddAsync(createExpenseDto, userId);
 
             if (!result.IsSuccess)
                 return BadRequest(result.Error);
-            
+
             return CreatedAtAction(nameof(GetExpense), new { id = result.Value.Id }, result.Value);
         }
 
@@ -78,9 +75,6 @@ namespace ExpenseTracker.API.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateExpense(int id, CreateExpenseDto updateExpenseDto)
         {
-            // if (!ModelState.IsValid)
-            //     return BadRequest(ModelState);
-            
             var userId = GetCurrentUserId();
             var result = await _expensesService.EditAsync(id, updateExpenseDto, userId);
 

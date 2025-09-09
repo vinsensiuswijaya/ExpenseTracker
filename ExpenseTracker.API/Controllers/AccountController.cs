@@ -26,9 +26,6 @@ namespace ExpenseTracker.API.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginDto loginDto)
         {
-            // if (!ModelState.IsValid)
-            //     return BadRequest(ModelState);
-
             var user = await _userManager.Users.FirstOrDefaultAsync(x => x.UserName == loginDto.Username);
 
             if (user == null)
@@ -52,9 +49,6 @@ namespace ExpenseTracker.API.Controllers
         {
             try
             {
-                // if (!ModelState.IsValid)
-                //     return BadRequest(ModelState);
-
                 var user = new User
                 {
                     UserName = registerDto.Username,
