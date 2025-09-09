@@ -32,5 +32,23 @@ public class ApplicationDbContext : IdentityDbContext<User>
             },
         };
         builder.Entity<IdentityRole>().HasData(roles);
+
+        builder.Entity<Category>()
+            .HasOne(c => c.User)
+            .WithMany(u => u.Categories)
+            .HasForeignKey(c => c.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<Expense>()
+            .HasOne(e => e.User)
+            .WithMany(u => u.Expenses)
+            .HasForeignKey(e => e.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<Expense>()
+            .HasOne(e => e.Category)
+            .WithMany()
+            .HasForeignKey(e => e.CategoryId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

@@ -12,5 +12,8 @@ public class ExpenseMappingProfile : Profile
             .ForMember(dest => dest.CategoryName, opt => opt.MapFrom(src => src.Category.Name));
         CreateMap<ExpenseDto, Expense>()
             .ForMember(dest => dest.Category, opt => opt.Ignore());
+        CreateMap<CreateExpenseDto, Expense>()
+            .ForMember(dest => dest.Category, opt => opt.Ignore());
+        CreateMap<Expense, ExpenseChartDataDto>();
     }
 }

@@ -1,18 +1,14 @@
 ﻿using ExpenseTracker.API.DTOs;
+using ExpenseTracker.API.Enums;
 
 namespace ExpenseTracker.API.Interfaces;
 
 public interface IExpensesService
 {
-    // CREATE
-    Task AddAsync(ExpenseDto expenseDto);
-    // READ
-    Task<IEnumerable<ExpenseDto>> GetAllAsync();
-    Task<ExpenseDto> GetByIdAsync(int id);
-    // UPDATE
-    Task EditAsync(ExpenseDto updatedExpenseDto);
-    // DELETE
-    Task DeleteAsync(int id);
-
-    Task<IEnumerable<ExpenseChartDataDto>> GetChartDataAsync();
+    Task<Result<IEnumerable<ExpenseDto>>> GetByUserIdAsync(string userId);
+    Task<Result<ExpenseDto>> GetByIdAsync(int id, string userId);
+    Task<Result<ExpenseDto>> AddAsync(CreateExpenseDto createExpenseDto, string userId);
+    Task<Result<bool>> EditAsync(int id, CreateExpenseDto updateExpenseDto, string userId);
+    Task<Result<bool>> DeleteAsync(int id, string userId);
+    Task<Result<IEnumerable<ExpenseChartDataDto>>> GetChartDataAsync(string userId);
 }

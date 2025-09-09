@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using ExpenseTracker.API.DTOs;
 using ExpenseTracker.API.Interfaces;
 using ExpenseTracker.API.Services;
@@ -20,75 +21,99 @@ namespace ExpenseTracker.API.Controllers
             _categoriesService = categoriesService;
         }
 
+        private string GetCurrentUserId()
+        {
+            string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
+                            User.FindFirst("sub")?.Value;
+            
+            if (string.IsNullOrWhiteSpace(userId))
+                throw new UnauthorizedAccessException("User ID not found in token.");
+
+            return userId;
+        }
+
         [Authorize]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ExpenseDto>>> GetExpenses()
         {
-            var expenses = await _expensesService.GetAllAsync();
-            expenses.OrderBy(e => e.Id);
+            var userId = GetCurrentUserId();
+            var result = await _expensesService.GetByUserIdAsync(userId);
 
-            return Ok(expenses);
+            if (!result.IsSuccess)
+                return BadRequest(result.Error);
+
+            return Ok(result.Value.OrderBy(e => e.Id));
         }
 
         [Authorize]
         [HttpGet("{id}")]
         public async Task<ActionResult<ExpenseDto>> GetExpense(int id)
         {
-            var expense = await _expensesService.GetByIdAsync(id);
+            var userId = GetCurrentUserId();
+            var result = await _expensesService.GetByIdAsync(id, userId);
             
-            if (expense == null)
-                return NotFound();
+            if (!result.IsSuccess)
+                return NotFound(result.Error);
 
-            return Ok(expense);
+            return Ok(result.Value);
         }
 
         [Authorize]
         [HttpPost]
-        public async Task<ActionResult<ExpenseDto>> CreateExpense(ExpenseDto expenseDto)
+        public async Task<ActionResult<ExpenseDto>> CreateExpense(CreateExpenseDto createExpenseDto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
             
-            await _expensesService.AddAsync(expenseDto);
+            var userId = GetCurrentUserId();
+            var result = await _expensesService.AddAsync(createExpenseDto, userId);
+
+            if (!result.IsSuccess)
+                return BadRequest(result.Error);
             
-            return CreatedAtAction(nameof(GetExpense), new { id = expenseDto.Id}, expenseDto);
+            return CreatedAtAction(nameof(GetExpense), new { id = result.Value.Id }, result.Value);
         }
 
         [Authorize]
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateExpense(int id, ExpenseDto expenseDto)
+        public async Task<IActionResult> UpdateExpense(int id, CreateExpenseDto updateExpenseDto)
         {
-            if (id != expenseDto.Id)
-                return BadRequest();
-            
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
             
-            await _expensesService.EditAsync(expenseDto);
+            var userId = GetCurrentUserId();
+            var result = await _expensesService.EditAsync(id, updateExpenseDto, userId);
 
-            return Ok(expenseDto);
+            if (!result.IsSuccess)
+                return NotFound(result.Error);
+
+            return NoContent();
         }
 
         [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteExpense(int id)
         {
-            var expense = await _expensesService.GetByIdAsync(id);
+            var userId = GetCurrentUserId();
+            var result = await _expensesService.DeleteAsync(id, userId);
 
-            if (expense == null)
-                return NotFound();
+            if (!result.IsSuccess)
+                return NotFound(result.Error);
 
-            await _expensesService.DeleteAsync(id);
-
-            return Ok();
+            return NoContent();
         }
 
         [Authorize]
         [HttpGet("chart")]
         public async Task<ActionResult<IEnumerable<ExpenseChartDataDto>>> GetChartData()
         {
-            var data = await _expensesService.GetChartDataAsync();
-            return Ok(data);
+            var userId = GetCurrentUserId();
+            var result = await _expensesService.GetChartDataAsync(userId);
+
+            if (!result.IsSuccess)
+                return BadRequest(result.Error);
+
+            return Ok(result.Value);
         }
     }
 }

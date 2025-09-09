@@ -1,5 +1,6 @@
 ﻿using ExpenseTracker.API.Data;
 using ExpenseTracker.API.DTOs;
+using ExpenseTracker.API.Interfaces;
 using ExpenseTracker.API.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,9 +10,12 @@ public class ExpenseRepository : GenericRepository<Expense>, IExpenseRepository
 {
     public ExpenseRepository(ApplicationDbContext context) : base(context) { }
 
-    public override async Task<IEnumerable<Expense>> GetAllAsync()
+    public async Task<IEnumerable<Expense>> GetByUserIdAsync(string userId)
     {
-        return await _dbSet.Include(e => e.Category).ToListAsync();
+        return await _dbSet
+            .Include(e => e.Category)
+            .Where(e => e.UserId == userId)
+            .ToListAsync();
     }
 
     public override async Task<Expense> GetByIdAsync(int id)
@@ -20,10 +24,11 @@ public class ExpenseRepository : GenericRepository<Expense>, IExpenseRepository
             .FirstOrDefaultAsync(e => e.Id == id);
     }
 
-    public async Task<IEnumerable<ExpenseChartDataDto>> GetChartDataAsync()
+    public async Task<IEnumerable<ExpenseChartDataDto>> GetChartDataByUserAsync(string userId)
     {
         var expenses = await _context.Expenses
             .Include(e => e.Category)
+            .Where(e => e.UserId == userId)
             .ToListAsync();
 
         var data = expenses

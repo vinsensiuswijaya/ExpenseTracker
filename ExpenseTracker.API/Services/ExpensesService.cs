@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using ExpenseTracker.API.Data;
 using ExpenseTracker.API.DTOs;
+using ExpenseTracker.API.Enums;
 using ExpenseTracker.API.Interfaces;
 using ExpenseTracker.API.Models;
 using ExpenseTracker.API.Repositories;
@@ -11,18 +12,37 @@ public class ExpensesService : IExpensesService
 {
     private readonly IMapper _mapper;
     private readonly ApplicationDbContext _context;
-    private IExpenseRepository _expenseRepository;
+    private readonly IExpenseRepository _expenseRepository;
 
-    public ExpensesService(IMapper mapper, ApplicationDbContext context)
+    public ExpensesService(IMapper mapper, ApplicationDbContext context, IExpenseRepository expenseRepository)
     {
         _mapper = mapper;
         _context = context;
-        _expenseRepository = new ExpenseRepository(_context);
+        _expenseRepository = expenseRepository;
     }
 
-    public async Task AddAsync(ExpenseDto expenseDto)
+    public async Task<Result<IEnumerable<ExpenseDto>>> GetByUserIdAsync(string userId)
     {
-        var expense = _mapper.Map<Expense>(expenseDto);
+        var expenses = await _expenseRepository.GetByUserIdAsync(userId);
+        var expenseDtos = _mapper.Map<IEnumerable<ExpenseDto>>(expenses);
+        return Result<IEnumerable<ExpenseDto>>.Success(expenseDtos);
+    }
+
+    public async Task<Result<ExpenseDto>> GetByIdAsync(int id, string userId)
+    {
+        var expense = await _expenseRepository.GetByIdAsync(id);
+        if (expense == null || expense.UserId != userId)
+            return Result<ExpenseDto>.Failure("Expense not found");
+
+        var expenseDto = _mapper.Map<ExpenseDto>(expense);
+        return Result<ExpenseDto>.Success(expenseDto);
+    }
+
+    public async Task<Result<ExpenseDto>> AddAsync(CreateExpenseDto createExpenseDto, string userId)
+    {
+        var expense = _mapper.Map<Expense>(createExpenseDto);
+        expense.UserId = userId;
+
         if (expense.Date.Kind == DateTimeKind.Unspecified)
             expense.Date = DateTime.SpecifyKind(expense.Date, DateTimeKind.Local).ToUniversalTime();
         else
@@ -30,48 +50,45 @@ public class ExpensesService : IExpensesService
 
         await _expenseRepository.AddAsync(expense);
         await _context.SaveChangesAsync();
+
+        var savedExpense = await _expenseRepository.GetByIdAsync(expense.Id);
+        var expenseDto = _mapper.Map<ExpenseDto>(savedExpense);
+        return Result<ExpenseDto>.Success(expenseDto);
     }
 
-    public async Task EditAsync(ExpenseDto updatedExpenseDto)
+    public async Task<Result<bool>> EditAsync(int id, CreateExpenseDto updateExpenseDto, string userId)
     {
-        var existingExpense = await _expenseRepository.GetByIdAsync(updatedExpenseDto.Id);
-        
-        _mapper.Map(updatedExpenseDto, existingExpense);
+        var expense = await _expenseRepository.GetByIdAsync(id);
+        if (expense == null || expense.UserId != userId)
+            return Result<bool>.Failure("Expense not found");
 
-        if (existingExpense.Date.Kind == DateTimeKind.Unspecified)
-            existingExpense.Date = DateTime.SpecifyKind(existingExpense.Date, DateTimeKind.Local).ToUniversalTime();
+        _mapper.Map(updateExpenseDto, expense);
+
+        if (expense.Date.Kind == DateTimeKind.Unspecified)
+            expense.Date = DateTime.SpecifyKind(expense.Date, DateTimeKind.Local).ToUniversalTime();
         else
-            existingExpense.Date = existingExpense.Date.ToUniversalTime();
-        
-        _expenseRepository.Update(existingExpense);
+            expense.Date = expense.Date.ToUniversalTime();
+
+        _expenseRepository.Update(expense);
         await _context.SaveChangesAsync();
+        return Result<bool>.Success(true);
     }
 
-    public async Task DeleteAsync(int id)
+    public async Task<Result<bool>> DeleteAsync(int id, string userId)
     {
         var expense = await _expenseRepository.GetByIdAsync(id);
-        if (expense != null)
-        {
-            _expenseRepository.Remove(expense);
-            await _context.SaveChangesAsync();
-        }
-    }
- 
-    public async Task<IEnumerable<ExpenseDto>> GetAllAsync()
-    {
-        var expenses = await _expenseRepository.GetAllAsync();
-        return _mapper.Map<IEnumerable<ExpenseDto>>(expenses);
+
+        if (expense == null || expense.UserId != userId)
+            return Result<bool>.Failure("Expense not found");
+
+        _expenseRepository.Remove(expense);
+        await _context.SaveChangesAsync();
+        return Result<bool>.Success(true);
     }
 
-    public async Task<ExpenseDto> GetByIdAsync(int id)
+    public async Task<Result<IEnumerable<ExpenseChartDataDto>>> GetChartDataAsync(string userId)
     {
-        var expense = await _expenseRepository.GetByIdAsync(id);
-        return expense == null ? null : _mapper.Map<ExpenseDto>(expense);
-    }
-
-    public async Task<IEnumerable<ExpenseChartDataDto>> GetChartDataAsync()
-    {
-        var data = await _expenseRepository.GetChartDataAsync();
-        return data;
+        var chartData = await _expenseRepository.GetChartDataByUserAsync(userId);
+        return Result<IEnumerable<ExpenseChartDataDto>>.Success(chartData);
     }
 }

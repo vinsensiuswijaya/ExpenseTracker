@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using ExpenseTracker.API.DTOs;
 using ExpenseTracker.API.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -17,64 +18,87 @@ namespace ExpenseTracker.API.Controllers
             _categoriesService = categoriesService;
         }
 
+        private string GetCurrentUserId()
+        {
+            string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
+                            User.FindFirst("sub")?.Value;
+
+            if (string.IsNullOrWhiteSpace(userId))
+                throw new UnauthorizedAccessException("User ID not found in token.");
+            
+            return userId;
+        }
+        
+
         [Authorize]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<CategoryDto>>> GetCategories()
         {
-            var categories = await _categoriesService.GetAllAsync();
-            return Ok(categories.OrderBy(c => c.Id) );
+            var userId = GetCurrentUserId();
+            var result = await _categoriesService.GetByUserIdAsync(userId);
+
+            if (!result.IsSuccess)
+                return BadRequest(result.Error);
+
+            return Ok(result.Value.OrderBy(c => c.Id));
         }
 
         [Authorize]
         [HttpGet("{id}")]
         public async Task<ActionResult<CategoryDto>> GetCategory(int id)
         {
-            var category = await _categoriesService.GetByIdAsync(id);
+            var userId = GetCurrentUserId();
+            var result = await _categoriesService.GetByIdAsync(id, userId);
 
-            if (category == null)
-                return NotFound();
+            if (!result.IsSuccess)
+                return NotFound(result.Error);
             
-            return Ok(category);
+            return Ok(result.Value);
         }
 
         [Authorize]
         [HttpPost]
-        public async Task<ActionResult<CategoryDto>> CreateCategory(CategoryDto categoryDto)
+        public async Task<ActionResult<CategoryDto>> CreateCategory(CreateCategoryDto createCategoryDto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
             
-            await _categoriesService.AddAsync(categoryDto);
+            var userId = GetCurrentUserId();
+            var result = await _categoriesService.AddAsync(createCategoryDto, userId);
+
+            if (!result.IsSuccess)
+                return BadRequest(result.Error);
             
-            return CreatedAtAction(nameof(GetCategory), new { id = categoryDto.Id }, categoryDto);
+            return CreatedAtAction(nameof(GetCategory), new { id = result.Value.Id }, result.Value);
         }
 
         [Authorize]
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateCategory(int id, CategoryDto categoryDto)
+        public async Task<IActionResult> UpdateCategory(int id, CreateCategoryDto updateCategoryDto)
         {
-            if (id != categoryDto.Id)
-                return BadRequest();
-            
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            
-            await _categoriesService.EditAsync(categoryDto);
 
-            return Ok(categoryDto);
+            var userId = GetCurrentUserId();
+            var result = await _categoriesService.EditAsync(id, updateCategoryDto, userId);
+
+            if (!result.IsSuccess)
+                return NotFound(result.Error);
+
+            return NoContent();
         }
 
         [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCategory(int id)
         {
-            var category = await _categoriesService.GetByIdAsync(id);
-            if (category == null)
-                return NotFound();
+            var userId = GetCurrentUserId();
+            var result = await _categoriesService.DeleteAsync(id, userId);
 
-            await _categoriesService.DeleteAsync(id);
+            if (!result.IsSuccess)
+                return NotFound(result.Error);
 
-            return Ok();
+            return NoContent();
         }
     }
 }

@@ -1,17 +1,13 @@
 ﻿using ExpenseTracker.API.DTOs;
-using ExpenseTracker.API.Models;
+using ExpenseTracker.API.Enums;
 
 namespace ExpenseTracker.API.Interfaces;
 
 public interface ICategoriesService
 {
-    // CREATE
-    Task AddAsync(CategoryDto categoryDto);
-    // READ
-    Task<IEnumerable<CategoryDto>> GetAllAsync();
-    Task<CategoryDto> GetByIdAsync(int id);
-    // UPDATE
-    Task EditAsync(CategoryDto categoryDto);
-    // DELETE
-    Task DeleteAsync(int id);
+    Task<Result<IEnumerable<CategoryDto>>> GetByUserIdAsync(string userId);
+    Task<Result<CategoryDto>> GetByIdAsync(int id, string userId);
+    Task<Result<CategoryDto>> AddAsync(CreateCategoryDto createCategoryDto, string userId);
+    Task<Result<bool>> EditAsync(int id, CreateCategoryDto updateCategoryDto, string userId);
+    Task<Result<bool>> DeleteAsync(int id, string userId);
 }
