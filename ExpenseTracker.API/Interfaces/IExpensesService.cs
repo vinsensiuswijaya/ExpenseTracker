@@ -1,5 +1,5 @@
 ﻿using ExpenseTracker.API.DTOs;
-using ExpenseTracker.API.Enums;
+using ExpenseTracker.API.Shared;
 
 namespace ExpenseTracker.API.Interfaces;
 

@@ -54,8 +54,14 @@ builder.Services.AddSwaggerGen(option =>
 });
 
 // Configure PostgreSQL as the database provider
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql((builder.Configuration.GetConnectionString("DefaultConnection"))));
+builder.Services.AddDbContextPool<ApplicationDbContext>(options =>
+{
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"), npgsql =>
+    {
+        npgsql.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(5), errorCodesToAdd: null);
+        npgsql.CommandTimeout(30);
+    });
+});
 
 builder.Services.AddIdentity<User, IdentityRole>(options =>
 {

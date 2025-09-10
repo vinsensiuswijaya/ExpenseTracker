@@ -8,7 +8,7 @@ namespace ExpenseTracker.API.Data;
 public class ApplicationDbContext : IdentityDbContext<User>
 {
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
-    
+
     public DbSet<Expense> Expenses { get; set; }
     public DbSet<Category> Categories { get; set; }
 
@@ -39,6 +39,13 @@ public class ApplicationDbContext : IdentityDbContext<User>
             .HasForeignKey(c => c.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        builder.Entity<Category>()
+            .HasIndex(c => c.UserId);
+
+        builder.Entity<Category>()
+            .HasIndex(c => new { c.UserId, c.Name })
+            .IsUnique();
+
         builder.Entity<Expense>()
             .HasOne(e => e.User)
             .WithMany(u => u.Expenses)
@@ -50,5 +57,11 @@ public class ApplicationDbContext : IdentityDbContext<User>
             .WithMany()
             .HasForeignKey(e => e.CategoryId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<Expense>()
+            .HasIndex(e => new { e.UserId, e.Date });
+
+        builder.Entity<Expense>()
+            .HasIndex(e => new { e.UserId, e.CategoryId });
     }
 }

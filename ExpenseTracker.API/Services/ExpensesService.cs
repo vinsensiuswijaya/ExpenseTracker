@@ -1,10 +1,10 @@
 ﻿using AutoMapper;
 using ExpenseTracker.API.Data;
 using ExpenseTracker.API.DTOs;
-using ExpenseTracker.API.Enums;
 using ExpenseTracker.API.Interfaces;
 using ExpenseTracker.API.Models;
 using ExpenseTracker.API.Repositories;
+using ExpenseTracker.API.Shared;
 
 namespace ExpenseTracker.API.Services;
 
@@ -32,7 +32,7 @@ public class ExpensesService : IExpensesService
     {
         var expense = await _expenseRepository.GetByIdAsync(id);
         if (expense == null || expense.UserId != userId)
-            return Result<ExpenseDto>.Failure("Expense not found");
+            return Result<ExpenseDto>.NotFound("Expense not found");
 
         var expenseDto = _mapper.Map<ExpenseDto>(expense);
         return Result<ExpenseDto>.Success(expenseDto);
@@ -60,7 +60,7 @@ public class ExpensesService : IExpensesService
     {
         var expense = await _expenseRepository.GetByIdAsync(id);
         if (expense == null || expense.UserId != userId)
-            return Result<bool>.Failure("Expense not found");
+            return Result<bool>.NotFound("Expense not found");
 
         _mapper.Map(updateExpenseDto, expense);
 
@@ -79,7 +79,7 @@ public class ExpensesService : IExpensesService
         var expense = await _expenseRepository.GetByIdAsync(id);
 
         if (expense == null || expense.UserId != userId)
-            return Result<bool>.Failure("Expense not found");
+            return Result<bool>.NotFound("Expense not found");
 
         _expenseRepository.Remove(expense);
         await _context.SaveChangesAsync();

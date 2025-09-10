@@ -5,6 +5,7 @@ using ExpenseTracker.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using ExpenseTracker.API.Enums;
 
 namespace ExpenseTracker.API.Controllers
 {
@@ -40,9 +41,16 @@ namespace ExpenseTracker.API.Controllers
             var result = await _expensesService.GetByUserIdAsync(userId);
 
             if (!result.IsSuccess)
-                return BadRequest(result.Error);
+            {
+                return result.Code switch
+                {
+                    ErrorCode.NotFound => NotFound(result.Error),
+                    _ => BadRequest(result.Error)
+                };
+            }
 
-            return Ok(result.Value.OrderBy(e => e.Id));
+            var ordered = result.Value.OrderBy(e => e.Id);
+            return Ok(ordered);
         }
 
         [Authorize]
@@ -53,7 +61,13 @@ namespace ExpenseTracker.API.Controllers
             var result = await _expensesService.GetByIdAsync(id, userId);
 
             if (!result.IsSuccess)
-                return NotFound(result.Error);
+            {
+                return result.Code switch
+                {
+                    ErrorCode.NotFound => NotFound(result.Error),
+                    _ => BadRequest(result.Error)
+                };
+            }
 
             return Ok(result.Value);
         }
@@ -66,7 +80,13 @@ namespace ExpenseTracker.API.Controllers
             var result = await _expensesService.AddAsync(createExpenseDto, userId);
 
             if (!result.IsSuccess)
-                return BadRequest(result.Error);
+            {
+                return result.Code switch
+                {
+                    ErrorCode.ValidationFailed => BadRequest(result.Error),
+                    _ => BadRequest(result.Error)
+                };
+            }
 
             return CreatedAtAction(nameof(GetExpense), new { id = result.Value.Id }, result.Value);
         }
@@ -79,7 +99,14 @@ namespace ExpenseTracker.API.Controllers
             var result = await _expensesService.EditAsync(id, updateExpenseDto, userId);
 
             if (!result.IsSuccess)
-                return NotFound(result.Error);
+            {
+                return result.Code switch
+                {
+                    ErrorCode.NotFound => NotFound(result.Error),
+                    ErrorCode.ValidationFailed => BadRequest(result.Error),
+                    _ => BadRequest(result.Error)
+                };
+            }
 
             return NoContent();
         }
@@ -92,7 +119,13 @@ namespace ExpenseTracker.API.Controllers
             var result = await _expensesService.DeleteAsync(id, userId);
 
             if (!result.IsSuccess)
-                return NotFound(result.Error);
+            {
+                return result.Code switch
+                {
+                    ErrorCode.NotFound => NotFound(result.Error),
+                    _ => BadRequest(result.Error)
+                };
+            }
 
             return NoContent();
         }

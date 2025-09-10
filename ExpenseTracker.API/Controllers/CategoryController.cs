@@ -4,6 +4,7 @@ using ExpenseTracker.API.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using ExpenseTracker.API.Enums;
 
 namespace ExpenseTracker.API.Controllers
 {
@@ -64,7 +65,14 @@ namespace ExpenseTracker.API.Controllers
             var result = await _categoriesService.AddAsync(createCategoryDto, userId);
 
             if (!result.IsSuccess)
-                return BadRequest(result.Error);
+            {
+                return result.Code switch
+                {
+                    ErrorCode.Conflict => Conflict(result.Error),
+                    ErrorCode.ValidationFailed => BadRequest(result.Error),
+                    _ => BadRequest(result.Error)
+                };
+            }
 
             return CreatedAtAction(nameof(GetCategory), new { id = result.Value.Id }, result.Value);
         }
@@ -77,7 +85,15 @@ namespace ExpenseTracker.API.Controllers
             var result = await _categoriesService.EditAsync(id, updateCategoryDto, userId);
 
             if (!result.IsSuccess)
-                return NotFound(result.Error);
+            {
+                return result.Code switch
+                {
+                    ErrorCode.NotFound => NotFound(result.Error),
+                    ErrorCode.Conflict => Conflict(result.Error),
+                    ErrorCode.ValidationFailed => BadRequest(result.Error),
+                    _ => BadRequest(result.Error)
+                };
+            }
 
             return NoContent();
         }
@@ -90,7 +106,13 @@ namespace ExpenseTracker.API.Controllers
             var result = await _categoriesService.DeleteAsync(id, userId);
 
             if (!result.IsSuccess)
-                return NotFound(result.Error);
+            {
+                return result.Code switch
+                {
+                    ErrorCode.NotFound => NotFound(result.Error),
+                    _ => BadRequest(result.Error)
+                };
+            }
 
             return NoContent();
         }

@@ -11,6 +11,7 @@ public class CategoryRepository : GenericRepository<Category>, ICategoryReposito
     public async Task<IEnumerable<Category>> GetByUserIdAsync(string userId)
     {
         return await _dbSet
+            .AsNoTracking()
             .Where(c => c.UserId == userId)
             .ToListAsync();
     }

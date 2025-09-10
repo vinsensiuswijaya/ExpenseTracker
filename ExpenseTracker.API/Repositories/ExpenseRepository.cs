@@ -13,6 +13,7 @@ public class ExpenseRepository : GenericRepository<Expense>, IExpenseRepository
     public async Task<IEnumerable<Expense>> GetByUserIdAsync(string userId)
     {
         return await _dbSet
+            .AsNoTracking()
             .Include(e => e.Category)
             .Where(e => e.UserId == userId)
             .ToListAsync();
@@ -20,7 +21,9 @@ public class ExpenseRepository : GenericRepository<Expense>, IExpenseRepository
 
     public override async Task<Expense> GetByIdAsync(int id)
     {
-        return await _dbSet.Include(e => e.Category) 
+        return await _dbSet
+            .AsNoTracking()
+            .Include(e => e.Category) 
             .FirstOrDefaultAsync(e => e.Id == id);
     }
 
