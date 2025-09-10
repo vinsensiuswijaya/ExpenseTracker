@@ -3,9 +3,7 @@ using ExpenseTracker.API.Data;
 using ExpenseTracker.API.DTOs;
 using ExpenseTracker.API.Interfaces;
 using ExpenseTracker.API.Models;
-using ExpenseTracker.API.Repositories;
 using ExpenseTracker.API.Shared;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 

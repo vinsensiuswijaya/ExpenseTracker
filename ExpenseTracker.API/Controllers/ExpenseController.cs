@@ -1,11 +1,10 @@
 using System.Security.Claims;
 using ExpenseTracker.API.DTOs;
 using ExpenseTracker.API.Interfaces;
-using ExpenseTracker.API.Services;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using ExpenseTracker.API.Enums;
+using ExpenseTracker.API.Shared;
 
 namespace ExpenseTracker.API.Controllers
 {
@@ -14,30 +13,17 @@ namespace ExpenseTracker.API.Controllers
     public class ExpenseController : ControllerBase
     {
         private readonly IExpensesService _expensesService;
-        private readonly ICategoriesService _categoriesService;
 
-        public ExpenseController(IExpensesService expensesService, ICategoriesService categoriesService)
+        public ExpenseController(IExpensesService expensesService)
         {
             _expensesService = expensesService;
-            _categoriesService = categoriesService;
-        }
-
-        private string GetCurrentUserId()
-        {
-            string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
-                            User.FindFirst("sub")?.Value;
-
-            if (string.IsNullOrWhiteSpace(userId))
-                throw new UnauthorizedAccessException("User ID not found in token.");
-
-            return userId;
         }
 
         [Authorize]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ExpenseDto>>> GetExpenses()
         {
-            var userId = GetCurrentUserId();
+            var userId = User.GetUserId();
             var result = await _expensesService.GetByUserIdAsync(userId);
 
             if (!result.IsSuccess)
@@ -49,15 +35,14 @@ namespace ExpenseTracker.API.Controllers
                 };
             }
 
-            var ordered = result.Value.OrderBy(e => e.Id);
-            return Ok(ordered);
+            return Ok(result.Value);
         }
 
         [Authorize]
         [HttpGet("{id}")]
         public async Task<ActionResult<ExpenseDto>> GetExpense(int id)
         {
-            var userId = GetCurrentUserId();
+            var userId = User.GetUserId();
             var result = await _expensesService.GetByIdAsync(id, userId);
 
             if (!result.IsSuccess)
@@ -76,7 +61,7 @@ namespace ExpenseTracker.API.Controllers
         [HttpPost]
         public async Task<ActionResult<ExpenseDto>> CreateExpense(CreateExpenseDto createExpenseDto)
         {
-            var userId = GetCurrentUserId();
+            var userId = User.GetUserId();
             var result = await _expensesService.AddAsync(createExpenseDto, userId);
 
             if (!result.IsSuccess)
@@ -95,7 +80,7 @@ namespace ExpenseTracker.API.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateExpense(int id, CreateExpenseDto updateExpenseDto)
         {
-            var userId = GetCurrentUserId();
+            var userId = User.GetUserId();
             var result = await _expensesService.EditAsync(id, updateExpenseDto, userId);
 
             if (!result.IsSuccess)
@@ -115,7 +100,7 @@ namespace ExpenseTracker.API.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteExpense(int id)
         {
-            var userId = GetCurrentUserId();
+            var userId = User.GetUserId();
             var result = await _expensesService.DeleteAsync(id, userId);
 
             if (!result.IsSuccess)
@@ -134,7 +119,7 @@ namespace ExpenseTracker.API.Controllers
         [HttpGet("chart")]
         public async Task<ActionResult<IEnumerable<ExpenseChartDataDto>>> GetChartData()
         {
-            var userId = GetCurrentUserId();
+            var userId = User.GetUserId();
             var result = await _expensesService.GetChartDataAsync(userId);
 
             if (!result.IsSuccess)

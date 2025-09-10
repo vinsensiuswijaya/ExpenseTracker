@@ -16,6 +16,7 @@ public class ExpenseRepository : GenericRepository<Expense>, IExpenseRepository
             .AsNoTracking()
             .Include(e => e.Category)
             .Where(e => e.UserId == userId)
+            .OrderByDescending(e => e.Date)
             .ToListAsync();
     }
 
@@ -29,19 +30,15 @@ public class ExpenseRepository : GenericRepository<Expense>, IExpenseRepository
 
     public async Task<IEnumerable<ExpenseChartDataDto>> GetChartDataByUserAsync(string userId)
     {
-        var expenses = await _context.Expenses
-            .Include(e => e.Category)
+        return await _context.Expenses
+            .AsNoTracking()
             .Where(e => e.UserId == userId)
-            .ToListAsync();
-
-        var data = expenses
             .GroupBy(e => e.Category.Name)
             .Select(g => new ExpenseChartDataDto
             {
                 Category = g.Key,
                 Total = g.Sum(e => e.Amount)
             })
-            .ToList();
-        return data;
+            .ToListAsync();
     }
 }

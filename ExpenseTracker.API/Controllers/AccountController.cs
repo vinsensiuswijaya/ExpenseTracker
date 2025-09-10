@@ -1,7 +1,6 @@
 using ExpenseTracker.API.DTOs;
 using ExpenseTracker.API.Interfaces;
 using ExpenseTracker.API.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;

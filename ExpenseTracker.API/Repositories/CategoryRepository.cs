@@ -13,6 +13,7 @@ public class CategoryRepository : GenericRepository<Category>, ICategoryReposito
         return await _dbSet
             .AsNoTracking()
             .Where(c => c.UserId == userId)
+            .OrderBy(c => c.Name)
             .ToListAsync();
     }
 }

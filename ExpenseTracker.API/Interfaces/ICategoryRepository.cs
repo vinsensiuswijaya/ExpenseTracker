@@ -1,5 +1,4 @@
 ﻿using ExpenseTracker.API.Models;
-using ExpenseTracker.API.Repositories;
 
 namespace ExpenseTracker.API.Interfaces;
 

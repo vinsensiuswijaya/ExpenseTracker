@@ -3,7 +3,6 @@ using ExpenseTracker.API.Data;
 using ExpenseTracker.API.DTOs;
 using ExpenseTracker.API.Interfaces;
 using ExpenseTracker.API.Models;
-using ExpenseTracker.API.Repositories;
 using ExpenseTracker.API.Shared;
 
 namespace ExpenseTracker.API.Services;
