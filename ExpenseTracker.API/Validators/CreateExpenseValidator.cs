@@ -10,8 +10,7 @@ public class CreateExpenseValidator : AbstractValidator<CreateExpenseDto>
         RuleFor(e => e.Description)
             .NotEmpty().WithMessage("Description is required!")
             .Length(1, 100).WithMessage("Description must be between 1 and 100 characters!")
-            // .Matches(@"^[a-zA-Z0-9\s]+$").WithMessage("Description can only contain letters, number, and spaces!");
-            .Matches(@"^[\p{L}]\p{N}\s\s\-\.,'()]+$").WithMessage("Description contains invalid characters.");
+            .Matches(@"^[a-zA-Z0-9\s]+$").WithMessage("Description can only contain letters, number, and spaces!");
         
         RuleFor(e => e.Amount)
             .NotEmpty().WithMessage("Amount is required!")
