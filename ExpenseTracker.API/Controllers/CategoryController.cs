@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using ExpenseTracker.API.DTOs;
 using ExpenseTracker.API.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -27,7 +26,7 @@ namespace ExpenseTracker.API.Controllers
             var result = await _categoriesService.GetByUserIdAsync(userId);
 
             if (!result.IsSuccess)
-                return BadRequest(result.Error);
+                return BadRequest(new { message = result.Error });
 
             return Ok(result.Value);
         }
@@ -40,7 +39,7 @@ namespace ExpenseTracker.API.Controllers
             var result = await _categoriesService.GetByIdAsync(id, userId);
 
             if (!result.IsSuccess)
-                return NotFound(result.Error);
+                return NotFound(new {message = result.Error});
 
             return Ok(result.Value);
         }
@@ -56,8 +55,8 @@ namespace ExpenseTracker.API.Controllers
             {
                 return result.Code switch
                 {
-                    ErrorCode.Conflict => Conflict(result.Error),
-                    ErrorCode.ValidationFailed => BadRequest(result.Error),
+                    ErrorCode.Conflict => Conflict(new { message = result.Error }),
+                    ErrorCode.ValidationFailed => BadRequest(new { message = result.Error }),
                     _ => BadRequest(result.Error)
                 };
             }
@@ -76,10 +75,10 @@ namespace ExpenseTracker.API.Controllers
             {
                 return result.Code switch
                 {
-                    ErrorCode.NotFound => NotFound(result.Error),
-                    ErrorCode.Conflict => Conflict(result.Error),
-                    ErrorCode.ValidationFailed => BadRequest(result.Error),
-                    _ => BadRequest(result.Error)
+                    ErrorCode.NotFound => NotFound(new { message = result.Error}),
+                    ErrorCode.Conflict => Conflict(new { message = result.Error }),
+                    ErrorCode.ValidationFailed => BadRequest(new { message = result.Error }),
+                    _ => BadRequest(new { message = result.Error })
                 };
             }
 
@@ -97,8 +96,8 @@ namespace ExpenseTracker.API.Controllers
             {
                 return result.Code switch
                 {
-                    ErrorCode.NotFound => NotFound(result.Error),
-                    _ => BadRequest(result.Error)
+                    ErrorCode.NotFound => NotFound(new { message = result.Error }),
+                    _ => BadRequest(new {message = result.Error })
                 };
             }
 
