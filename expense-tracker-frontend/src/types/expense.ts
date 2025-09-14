@@ -17,6 +17,6 @@ export type CreateExpenseDto = {
 export type UpdateExpenseDto = CreateExpenseDto;
 
 export type ExpenseChartPoint = {
-    label: string;
+    category: string;
     total: number;
 }

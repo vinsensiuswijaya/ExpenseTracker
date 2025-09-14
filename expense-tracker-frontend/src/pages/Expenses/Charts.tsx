@@ -1,16 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
-import { getExpenses } from "../../services/expensesService";
-import type { Expense } from "../../types/expense";
+import type { ExpenseChartPoint } from "../../types/expense";
+import { getExpenseChart } from "../../services/expensesService";
 import { formatCurrency } from "../../utils/format";
 import Chart from "chart.js/auto";
 import { CategoryScale } from "chart.js";
-import {Pie} from "react-chartjs-2";
+import { Pie } from "react-chartjs-2";
 import { extractApiError } from "../../utils/extractApiError";
 
 Chart.register(CategoryScale);
 
 export default function Charts() {
-    const [items, setItems] = useState<Expense[]>([]);
+    const [items, setItems] = useState<ExpenseChartPoint[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -19,8 +19,11 @@ export default function Charts() {
             try {
                 setLoading(true);
                 setError(null);
-                const data = await getExpenses();
-                setItems(data);
+                const points = await getExpenseChart();
+                setItems(points.map(p => ({
+                    category: p.category,
+                    total: p.total
+                })));
             } catch (e) {
                 setError(extractApiError(e, "Failed to load data"));
             } finally {
@@ -30,23 +33,8 @@ export default function Charts() {
     }, []);
 
     const byCategory = useMemo(() => {
-        const map = new Map<string, number>();
-        for (const e of items) {
-            const key = e.categoryName ?? String(e.categoryId);
-            map.set(key, (map.get(key) ?? 0) + e.amount);
-        }
-        return Array.from(map.entries()).map(([label, total]) => ({ label, total }));
+        return items.map(e => ({ label: e.category, total: e.total }));
     }, [items]);
-
-    const chartData = {
-        labels: byCategory.map((data) => data.label),
-        datasets: [
-            {
-                label: "Total",
-                data: byCategory.map((data) => data.total)
-            }
-        ]
-    };
 
     return (
         <div className="p-4">
@@ -79,7 +67,10 @@ export default function Charts() {
                         </table>
                     </div>
                     <div className="chart-container max-w-lg mx-auto mt-8">
-                        <Pie data={chartData} />
+                        <Pie data={{
+                            labels: byCategory.map(r => r.label),
+                            datasets: [{ label: "Total", data: byCategory.map(r => r.total) }]
+                        }} />
                     </div>
                 </>
             )}
