@@ -6,6 +6,7 @@ import {
     logout as apiLogout
 } from "../services/authService.ts";
 import type { LoginDto, RegisterDto } from "../types/auth.ts";
+import { extractApiError } from "../utils/extractApiError.ts";
 
 type AuthContextType = {
     token: string | null;
@@ -30,16 +31,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         token,
         isAuthenticated: !!token,
         async login(dto) {
-            const resp = await apiLogin(dto);
-            const t = saveTokenFromResponse(resp);
-            if (!t) throw new Error("No token returned from server.");
-            setToken(t);
+            try {
+                const resp = await apiLogin(dto);
+                const t = saveTokenFromResponse(resp);
+                if (!t) throw new Error("No token returned from server.");
+                setToken(t);
+            } catch (e) {
+                throw new Error(extractApiError(e, "Login Failed"));
+            }
         },
         async register(dto) {
-            const resp = await apiRegister(dto);
-            const t = saveTokenFromResponse(resp);
-            if (!t) throw new Error("No token returned from server.");
-            setToken(t);
+            try {
+                const resp = await apiRegister(dto);
+                const t = saveTokenFromResponse(resp);
+                if (!t) throw new Error("No token returned from server.");
+                setToken(t);
+            } catch (e) {
+                throw new Error(extractApiError(e, "Registration Failed"));
+            }
         },
         logout() {
             apiLogout();
