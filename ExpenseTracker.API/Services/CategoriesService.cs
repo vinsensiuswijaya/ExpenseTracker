@@ -90,7 +90,15 @@ public class CategoriesService : ICategoriesService
             return Result<bool>.NotFound("Category not found");
 
         _categoryRepository.Remove(category);
-        await _context.SaveChangesAsync();
+
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException pex && pex.SqlState == "23503")
+        {
+            return Result<bool>.Conflict("This category has associated expenses and cannot be deleted.");
+        }
         return Result<bool>.Success(true);
     }
 }

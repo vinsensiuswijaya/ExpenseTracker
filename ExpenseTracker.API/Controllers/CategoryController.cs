@@ -97,6 +97,7 @@ namespace ExpenseTracker.API.Controllers
                 return result.Code switch
                 {
                     ErrorCode.NotFound => NotFound(new { message = result.Error }),
+                    ErrorCode.Conflict => Conflict(new { message = result.Error }),
                     _ => BadRequest(new {message = result.Error })
                 };
             }
