@@ -16,6 +16,7 @@ export default function ExpensesList() {
     const [editing, setEditing] = useState<Expense | null>(null);
     const [submitting, setSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState<string | null>(null);
+    const [creationCount, setCreationCount] = useState(0);
     const dialogRef = useRef<HTMLDialogElement | null>(null);
 
     const title = useMemo(() => (editing ? "Edit Expense" : "New Expense"), [editing]);
@@ -43,6 +44,7 @@ export default function ExpensesList() {
 
     const openCreate = () => {
         setEditing(null);
+        setCreationCount(c => c + 1);
         dialogRef.current?.showModal();
     };
 
@@ -52,9 +54,9 @@ export default function ExpensesList() {
     }
 
     const closeDialog = () => {
-        dialogRef.current?.close();
         setEditing(null);
         setSubmitError(null);
+        dialogRef.current?.close();
     };
 
     const handleSubmit = async (values: ExpenseFormValues) => {
@@ -162,6 +164,7 @@ export default function ExpensesList() {
                 <div className="modal-box">
                     <h3 className="font-bold text-lg mb-2">{title}</h3>
                     <ExpenseForm 
+                        key={editing?.id || `new-${creationCount}`}
                         initial={editing ?? undefined}
                         categories={categories}
                         onSubmit={handleSubmit}

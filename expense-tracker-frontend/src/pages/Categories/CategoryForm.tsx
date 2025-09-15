@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export type CategoryFormValues = { name: string };
 
@@ -16,6 +16,14 @@ export default function CategoryForm({
     error?: string | null;
 }) {
     const [values, setValues] = useState<CategoryFormValues>(initial ?? { name: ""});
+
+    useEffect(() => {
+        if (initial) {
+            setValues({ name: initial.name });
+        } else {
+            setValues({ name: "" });
+        }
+    }, [initial]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

@@ -24,22 +24,38 @@ export default function ExpenseForm({
     submitting?: boolean;
     error?: string | null;
 }) {
-    const [values, setValues] = useState<ExpenseFormValues>({
-        categoryId: 0,
-        amount: 0,
-        date: new Date().toISOString().slice(0, 10),
-        description: "",
+    const [values, setValues] = useState<ExpenseFormValues>(() => {
+        if (!initial) {
+            return {
+                categoryId: 0,
+                amount: 0,
+                date: new Date().toISOString().slice(0, 10),
+                description: "",
+            };
+        }
+        return {
+            categoryId: (initial as any).categoryId ?? 0,
+            amount: (initial as any).amount ?? 0,
+            date: ((initial as any).date ?? new Date().toISOString()).slice(0, 10),
+            description: (initial as any).description ?? "",
+        };
     });
 
     useEffect(() => {
         if (initial) {
-            const v: ExpenseFormValues = {
-                categoryId: ("categoryId" in initial ? (initial as any).categoryId : 0) as number,
-                amount: ("amount" in initial ? (initial as any).amount : 0) as number,
-                date: ("date" in initial ? (initial as any).date : new Date().toISOString().slice(0, 10)).slice(0,10),
-                description: ("description" in initial ? (initial as any).description : "") ?? "",
-            };
-            setValues(v);
+            setValues({
+                categoryId: (initial as any).categoryId ?? 0,
+                amount: (initial as any).amount ?? 0,
+                date: ((initial as any).date ?? new Date().toISOString()).slice(0, 10),
+                description: (initial as any).description ?? "",
+            });
+        } else {
+            setValues({
+                categoryId: 0,
+                amount: 0,
+                date: new Date().toISOString().slice(0, 10),
+                description: "",
+            });
         }
     }, [initial]);
 
@@ -93,11 +109,10 @@ export default function ExpenseForm({
 
             <div className="form-control">
                 <label className="label"><span className="label-text">Description</span></label>
-                <textarea 
-                    className="textarea textarea-bordered"
+                <input
+                    className="input input-bordered"
                     value={values.description}
                     onChange={(e) => setValues({ ...values, description: e.target.value })}
-                    rows={3}
                 />
             </div>
 

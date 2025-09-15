@@ -12,6 +12,7 @@ export default function CategoriesList() {
     const [editing, setEditing] = useState<Category | null>(null);
     const [submitting, setSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState<string | null>(null);
+    const [creationCount, setCreationCount] = useState(0);
     const dialogRef = useRef<HTMLDialogElement | null>(null);
 
     const title = useMemo(() => (editing ? "Edit Category" : "New Category"), [editing]);
@@ -24,7 +25,6 @@ export default function CategoriesList() {
                 const data = await getCategories();
                 setItems(data);
             } catch (e: any) {
-                // setError(e?.response?.data?.message || "Failed to load categories");
                 setError(extractApiError(e, "Failed to load categories"));
             } finally {
                 setLoading(false);
@@ -34,6 +34,7 @@ export default function CategoriesList() {
 
     const openCreate = () => {
         setEditing(null);
+        setCreationCount(c => c + 1);
         dialogRef.current?.showModal();
     };
 
@@ -43,9 +44,9 @@ export default function CategoriesList() {
     }
 
     const closeDialog = () => {
-        dialogRef.current?.close();
         setEditing(null);
         setSubmitError(null);
+        dialogRef.current?.close();
     };
 
     const handleSubmit = async (values: CategoryFormValues) => {
@@ -121,6 +122,7 @@ export default function CategoriesList() {
                 <div className="modal-box">
                     <h3 className="font-bold text-lg mb-2">{title}</h3>
                     <CategoryForm 
+                        key={editing?. id || `new-${creationCount}`}
                         initial={editing ? { name: editing.name } : undefined}
                         onSubmit={handleSubmit}
                         onCancel={closeDialog}
