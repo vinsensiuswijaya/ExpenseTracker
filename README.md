@@ -1,103 +1,115 @@
-# Expense Tracker API
+# Expense Tracker
 
-A robust backend API for a personal expense tracking application, built with .NET 8 and ASP.NET Core. This project demonstrates a clean, layered architecture and modern backend development practices.
+Expense Tracker is a full-stack web application designed to help users manage their personal finances. It features a secure RESTful API built with .NET 8 and a modern, responsive frontend built with React and TypeScript.
+
+This project is a demonstration of modern web development practices, including a clean, layered backend architecture and a reactive, component-based frontend.
+
+## Project Structure
+
+The repository is organized into two main projects:
+
+*   `./ExpenseTracker.API/`: The backend REST API.
+*   `./expense-tracker-frontend/`: The frontend client application.
+
+Each project has its own detailed `README.md` with more specific information about its architecture and setup.
+
+*   [Backend README](./ExpenseTracker.API/README.md)
+*   [Frontend README](./expense-tracker-frontend/README.md)
 
 ## Features
 
-*   **User Authentication**: Secure user registration and login using JWT (JSON Web Tokens).
-*   **Expense Management**: Full CRUD (Create, Read, Update, Delete) operations for user-specific expenses.
-*   **Category Management**: Full CRUD operations for user-specific expense categories.
-*   **Data Visualization**: An endpoint to provide aggregated expense data for charts (e.g., expenses by category).
+*   **Secure User Authentication**: User registration and login with JWT-based authentication.
+*   **Expense & Category Management**: Full CRUD (Create, Read, Update, Delete) functionality for expenses and categories, scoped to the authenticated user.
+*   **Data Visualization**: Aggregated expense data is available, visualized as charts on the frontend.
+*   **Responsive UI**: A clean and responsive user interface built with Tailwind CSS and DaisyUI.
+*   **Protected Routes**: Both the API and the client application protect routes that require authentication.
 
 ## Technologies
+
+### Backend (API)
 
 *   **Framework**: .NET 8, ASP.NET Core
 *   **Database**: PostgreSQL with Entity Framework Core
 *   **Authentication**: ASP.NET Core Identity with JWT Bearer Tokens
-*   **Architecture**: Layered architecture (Controllers, Services, Repositories)
-*   **Libraries**:
-    *   **AutoMapper**: For object-to-object mapping (Entities to DTOs).
-    *   **FluentValidation**: For robust and declarative input validation.
-    *   **DotNetEnv**: For managing environment variables.
+*   **Architecture**: Layered (Controllers, Services, Repositories)
+*   **Validation**: FluentValidation
 
-## Architectural Highlights
+### Frontend
 
-This project is built with a focus on separation of concerns, maintainability, and scalability.
-
-### Service Layer
-
-The business logic is encapsulated within a dedicated service layer (`/Services`). This decouples the business rules from the presentation layer (Controllers), making the logic reusable and easier to test independently.
-
-*   [`ICategoriesService`](ExpenseTracker.API/Interfaces/ICategoriesService.cs)
-*   [`IExpensesService`](ExpenseTracker.API/Interfaces/IExpensesService.cs)
-
-### Repository Pattern
-
-Data access is abstracted using the repository pattern. A generic repository (`GenericRepository.cs`) provides common data operations, while specific repositories (`ExpenseRepository.cs`, `CategoryRepository.cs`) handle more complex queries. This isolates the data access logic, allowing for easier changes to the data source and improved testability.
-
-*   [`IGenericRepository<T>`](ExpenseTracker.API/Interfaces/IGenericRepository.cs)
-*   [`IExpenseRepository`](ExpenseTracker.API/Interfaces/IExpenseRepository.cs)
-*   [`ICategoryRepository`](ExpenseTracker.API/Interfaces/ICategoryRepository.cs)
-
-### Result Object Pattern
-
-Instead of throwing exceptions for predictable failures (e.g., "not found"), services return a custom `Result<T>` object. This pattern provides a clear and explicit way to handle both successful outcomes and business logic errors, improving code readability and robustness.
-
-*   [`Result.cs`](ExpenseTracker.API/Shared/Result.cs)
-
-### JWT Authentication
-
-The API is secured using JSON Web Tokens. The [`TokenService`](ExpenseTracker.API/Services/TokenService.cs) generates a token upon successful login, which the client must include in the `Authorization` header for subsequent requests to protected endpoints.
-
-### Dependency Injection
-
-The application makes extensive use of .NET's built-in dependency injection container to manage the lifetime of services, repositories, and other components. This promotes loosely coupled code and is configured in [`Program.cs`](ExpenseTracker.API/Program.cs).
-
-## API Endpoints
-
-The API exposes the following resources:
-
-| Controller | Endpoint | Description |
-|---|---|---|
-| `Account` | `POST /api/account/register` | Registers a new user. |
-| | `POST /api/account/login` | Logs in a user and returns a JWT. |
-| `Category` | `GET /api/category` | Gets all categories for the authenticated user. |
-| | `POST /api/category` | Creates a new category. |
-| | `PUT /api/category/{id}` | Updates an existing category. |
-| | `DELETE /api/category/{id}` | Deletes a category. |
-| `Expense` | `GET /api/expense` | Gets all expenses for the authenticated user. |
-| | `POST /api/expense` | Creates a new expense. |
-| | `PUT /api/expense/{id}` | Updates an existing expense. |
-| | `DELETE /api/expense/{id}` | Deletes an expense. |
-| | `GET /api/expense/chart` | Gets aggregated expense data for charts. |
+*   **Framework**: React
+*   **Language**: TypeScript
+*   **Build Tool**: Vite
+*   **Styling**: Tailwind CSS, DaisyUI
+*   **State Management**: TanStack Query (React Query) for server state
+*   **Routing**: React Router
+*   **HTTP Client**: Axios
 
 ## Getting Started
+
+Follow these instructions to get both the backend and frontend running locally.
 
 ### Prerequisites
 
 *   .NET 8 SDK
-*   PostgreSQL
+*   Node.js (LTS version)
+*   PostgreSQL Server
 
-### Installation & Setup
+### 1. Backend Setup
 
-1.  **Clone the repository.**
+First, set up and run the .NET API.
+
+1.  **Navigate to the API directory:**
+    ```sh
+    cd ExpenseTracker.API
+    ```
+
 2.  **Configure Environment Variables:**
-    Create a `.env` file in the `ExpenseTracker.API` directory with the following content:
-
+    Create a `.env` file in the `ExpenseTracker.API` directory with the following content. Replace the placeholder values with your own.
     ```
     DefaultConnection="<YOUR_POSTGRESQL_CONNECTION_STRING>"
     JWT_ISSUER="<YOUR_JWT_ISSUER>"
     JWT_AUDIENCE="<YOUR_JWT_AUDIENCE>"
     JWT_SIGNINGKEY="<YOUR_SUPER_SECRET_JWT_SIGNING_KEY>"
     ```
+    *Example Connection String: `Server=localhost;Port=5432;Database=expensedb;User Id=postgres;Password=yourpassword;`*
 
-3.  **Apply Migrations:**
-    Navigate to the `ExpenseTracker.API` directory and run the following command to create the database schema:
+3.  **Apply Database Migrations:**
+    Run the following command to create the database schema:
     ```sh
     dotnet ef database update
     ```
 
-4.  **Run the Application:**
+4.  **Run the API:**
     ```sh
-    dotnet run --project ExpenseTracker.API
+    dotnet run
     ```
+    The API will be running at `http://localhost:5243` (or a similar port). Note this URL for the next step.
+
+### 2. Frontend Setup
+
+With the backend running, set up and run the React client.
+
+1.  **Open a new terminal.** Navigate to the frontend directory:
+    ```sh
+    cd expense-tracker-frontend
+    ```
+
+2.  **Install Dependencies:**
+    ```sh
+    npm install
+    ```
+
+3.  **Configure Environment Variables:**
+    Create a `.env` file in the `expense-tracker-frontend` directory. Point the `VITE_API_BASE_URL` to your running backend instance.
+    ```
+    VITE_API_BASE_URL="http://localhost:5243"
+    ```
+
+4.  **Run the Frontend:**
+    ```sh
+    npm run dev
+    ```
+
+### 3. Access the Application
+
+The application will be available in your browser at `http://localhost:5173`.
