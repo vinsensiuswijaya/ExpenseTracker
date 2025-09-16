@@ -13,7 +13,6 @@ export default function Navbar() {
                     <>
                         <Link to="/categories" className="btn btn-sm">Categories</Link>
                         <Link to="/expenses" className="btn btn-sm">Expenses</Link>
-                        <Link to="/expenses/charts" className="btn btn-sm">Charts</Link>
                     </>
                 )}
                 {isAuthenticated ? (

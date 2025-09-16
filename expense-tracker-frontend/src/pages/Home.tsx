@@ -1,34 +1,44 @@
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../context/AuthContext";
 import { getCategories } from "../services/categoriesService";
 import { getExpenses } from "../services/expensesService";
-import type { Expense } from "../types/expense";
+import { formatCurrency } from "../utils/format";
+import { extractApiError } from "../utils/extractApiError";
+import Charts from "./Expenses/Charts";
 
 export default function Home() {
     const { isAuthenticated } = useAuth();
-    const [loading, setLoading] = useState(false);
-    const [categoryCount, setCategoryCount] = useState(0);
-    const [expenseCount, setExpenseCount] = useState(0);
-    const [totalSpent, setTotalSpent] = useState(0);
-    const [error, setError] = useState<string | null>(null);
+    
+    const {
+        data: categories,
+        isLoading: isLoadingCategories,
+        error: categoriesError
+    } = useQuery({
+        queryKey: ['categories'],
+        queryFn: getCategories,
+        enabled: isAuthenticated,
+    });
 
-    useEffect(() => {
-        if (!isAuthenticated) return;
-        (async () => {
-            try {
-                setLoading(true);
-                setError(null);
-                const [cats, exps] = await Promise.all([getCategories(), getExpenses()]);
-                setCategoryCount(cats.length);
-                setExpenseCount(exps.length);
-                setTotalSpent(exps.reduce((sum: number, e: Expense) => sum + e.amount, 0));
-            } catch (e: any) {
-                setError(e?.response?.data?.message || "Failed to load dashboard data");
-            } finally {
-                setLoading(false);
-            }
-        })();
-    }, [isAuthenticated]);
+    const {
+        data: expenses,
+        isLoading: isLoadingExpenses,
+        error: expensesError
+    } = useQuery({
+        queryKey: ['expenses'],
+        queryFn: getExpenses,
+        enabled: isAuthenticated,
+    });
+
+    const categoryCount = categories?.length ?? 0;
+    const expenseCount = expenses?.length ?? 0;
+    const totalSpent = useMemo(() => 
+        expenses?.reduce((sum, e) => sum + e.amount, 0) ?? 0,
+        [expenses]
+    );
+
+    const isLoading = isLoadingCategories || isLoadingExpenses;
+    const combinedError = categoriesError || expensesError;
 
     if (!isAuthenticated) {
         return (
@@ -42,12 +52,13 @@ export default function Home() {
     }
 
     return (
-        <div className="p-6 space-y-6">
-            <h1 className="text-2xl font-semibold">Dashboard</h1>
-            {loading ? (
+        <>
+        <div className="p-4">
+            <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
+            {isLoading ? (
                 <div className="flex items-center gap-2"><span className="loading loading-spinner" />Loading...</div>
-            ) : error ? (
-                <div className="alert alert-error">{error}</div>
+            ) : combinedError ? (
+                <div className="alert alert-error">{extractApiError(combinedError, "Failed to load data")}</div>
             ) : (
                 <div className="grid gap-4 md:grid-cols-3">
                     <div className="stat bg-base-100 rounded-box shadow">
@@ -60,10 +71,12 @@ export default function Home() {
                     </div>
                     <div className="stat bg-base-100 rounded-box shadow">
                         <div className="stat-title">Total Spent</div>
-                        <div className="stat-value">Rp{totalSpent.toFixed(2)}</div>
+                        <div className="stat-value">{formatCurrency(totalSpent)}</div>
                     </div>
                 </div>
             )}
         </div>
+        <Charts />
+        </>
     );
 }

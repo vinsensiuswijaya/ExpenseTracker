@@ -18,7 +18,7 @@ export default function Charts() {
 
     return (
         <div className="p-4">
-            <h1 className="text-2xl font-semibold mb-4">Expense Summary</h1>
+            <h1 className="text-2xl font-bold mb-4">Expense Summary</h1>
             {isLoading ? (
                 <div className="loading loading-lg" />
             ) : error ? (

@@ -28,7 +28,6 @@ export default function CategoriesList() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['categories'] });
-            // closeForm();
             closeDialog();
         },
     });
@@ -96,7 +95,7 @@ export default function CategoriesList() {
                                     <td className="flex gap-2 justify-end">
                                         <button className="btn btn-sm" onClick={() => openEdit(category)}>Edit</button>
                                         <button
-                                            className="btn btn-sm btn-error ml-2"
+                                            className="btn btn-sm btn-error"
                                             onClick={() => handleDelete(category.id)}
                                             disabled={deleteMutation.isPending && deleteMutation.variables === category.id}
                                         >

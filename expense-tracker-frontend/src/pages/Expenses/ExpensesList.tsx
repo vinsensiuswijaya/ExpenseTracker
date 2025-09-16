@@ -106,9 +106,9 @@ export default function ExpensesList() {
                                     <td className="text-right">{formatCurrency(expense.amount)}</td>
                                     <td>{expense.categoryName ?? expense.categoryId}</td>
                                     <td className="flex gap-2 justify-end">
-                                        <button className="btn btn-xs" onClick={() => openEdit(expense)}>Edit</button>
+                                        <button className="btn btn-sm" onClick={() => openEdit(expense)}>Edit</button>
                                         <button 
-                                            className="btn btn-xs btn-error"
+                                            className="btn btn-sm btn-error"
                                             onClick={() => handleDelete(expense.id)}
                                             disabled={deleteMutation.isPending && deleteMutation.variables === expense.id}
                                         >
