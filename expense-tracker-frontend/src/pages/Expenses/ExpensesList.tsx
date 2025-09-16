@@ -1,132 +1,91 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { createExpense, deleteExpense, getExpense, getExpenses, updateExpense } from "../../services/expensesService";
+import { useMemo, useRef, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getExpenses, createExpense, updateExpense, deleteExpense } from "../../services/expensesService";
 import { getCategories } from "../../services/categoriesService";
-import type { Expense } from "../../types/expense";
-import type { Category } from "../../types/category";
-import ExpenseForm from "./ExpenseForm";
-import type { ExpenseFormValues } from "./ExpenseForm";
+import type { Expense, CreateExpenseDto } from "../../types/expense";
+import ExpenseForm, { type ExpenseFormValues } from "./ExpenseForm";
 import { formatCurrency } from "../../utils/format";
 import { extractApiError } from "../../utils/extractApiError";
 
 export default function ExpensesList() {
-    const [items, setItems] = useState<Expense[]>([]);
-    const [categories, setCategories] = useState<Category[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [editing, setEditing] = useState<Expense | null>(null);
-    const [submitting, setSubmitting] = useState(false);
-    const [submitError, setSubmitError] = useState<string | null>(null);
-    const [creationCount, setCreationCount] = useState(0);
+    const [editingExpense, setEditingExpense] = useState<Expense | null>()
     const dialogRef = useRef<HTMLDialogElement | null>(null);
 
-    const title = useMemo(() => (editing ? "Edit Expense" : "New Expense"), [editing]);
+    const queryClient = useQueryClient();
 
-    useEffect(() => {
-        (async () => {
-            try {
-                setLoading(true);
-                setError(null);
-                const [cats, exps] = await Promise.all([getCategories(), getExpenses()]);
-                setCategories(cats);
-                setItems(
-                    exps.map((e) => ({
-                        ...e,
-                        categoryName: e.categoryName ?? cats.find((c) => c.id === e.categoryId)?.name
-                    }))
-                );
-            } catch (e) {
-                setError(extractApiError(e, "Failed to load expenses"));
-            } finally {
-                setLoading(false);
+    const title = useMemo(() => (editingExpense ? "Edit Expense" : "New Expense"), [editingExpense]);
+
+    const { data: expenses, isLoading: isLoadingExpenses, error: expensesError } = useQuery({
+        queryKey: ['expenses'],
+        queryFn: getExpenses,
+    })
+
+    const { data: categories, isLoading: isLoadingCategories } = useQuery({
+        queryKey: ['categories'],
+        queryFn: getCategories,
+    });
+
+    const saveMutation = useMutation({
+        mutationFn: async (data: { id?: number, values: CreateExpenseDto }) => {
+            if (data.id) {
+                await updateExpense(data.id, data.values);
+            } else {
+                await createExpense(data.values);
             }
-        })();
-    }, []);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['expenses'] });
+            closeDialog();
+        },
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: deleteExpense,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['expenses'] });
+        },
+    });
 
     const openCreate = () => {
-        setEditing(null);
-        setCreationCount(c => c + 1);
+        saveMutation.reset();
+        setEditingExpense(null);
         dialogRef.current?.showModal();
     };
 
-    const openEdit = (e: Expense) => {
-        setEditing(e);
+    const openEdit = (expense: Expense) => {
+        saveMutation.reset();
+        setEditingExpense(expense);
         dialogRef.current?.showModal();
-    }
+    };
 
     const closeDialog = () => {
-        setEditing(null);
-        setSubmitError(null);
+        setEditingExpense(null);
         dialogRef.current?.close();
     };
 
-    const handleSubmit = async (values: ExpenseFormValues) => {
-        setSubmitting(true);
-        setSubmitError(null);
-        try {
-            if (editing) {
-                await updateExpense(editing.id, {
-                    categoryId: values.categoryId,
-                    amount: values.amount,
-                    date: new Date(values.date).toISOString(),
-                    description: values.description,
-                });
-                setItems((prev) =>
-                    prev.map((x) => 
-                        x.id === editing.id
-                            ? {
-                                ...x,
-                                ...values,
-                                date: values.date,
-                                categoryName: categories.find((c) => c.id === values.categoryId)?.name,
-                            }
-                        : x
-                    )
-                );
-            } else {
-                const created = await createExpense({
-                    categoryId: values.categoryId,
-                    amount: values.amount,
-                    date: new Date(values.date).toISOString(),
-                    description: values.description,
-                });
-                setItems((prev) => [
-                    {
-                        ...created,
-                        date: created.date?.slice(0, 10) ?? values.date,
-                        categoryName: categories.find((c) => c.id === created.categoryId)?.name,
-                    },
-                    ...prev,
-                ]);
-            }
-            closeDialog();
-        } catch (e) {
-            setSubmitError(extractApiError(e, "Save failed"));
-        } finally {
-            setSubmitting(false);
+    const handleSubmit = (values: ExpenseFormValues) => {
+        saveMutation.mutate({ id: editingExpense?.id, values });
+    };
+
+    const handleDelete = (id: number) => {
+        if (confirm("Delete this expense?")) {
+            deleteMutation.mutate(id);
         }
     };
 
-    const handleDelete = async (exp: Expense) => {
-        if (!confirm("Delete this expense?")) return;
-        try {
-            await deleteExpense(exp.id);
-            setItems((prev) => prev.filter((x) => x.id !== exp.id));
-        } catch (e) {
-            alert(extractApiError(e, "Delete failed"));
-        }
-    };
+    const isLoading = isLoadingExpenses || isLoadingCategories;
 
     return (
         <div className="p-4">
             <div className="flex items-center justify-between mb-4">
-                <h1 className="text-2xl font-semibold">Expenses</h1>
+                <h1 className="text-2xl font-bold">Expenses</h1>
                 <button className="btn btn-primary" onClick={openCreate}>New Expense</button>
             </div>
 
-            {loading ? (
-                <div className="loading loading-lg" />
-            ) : error ? (
-                <div className="alert aler-error">{error}</div>
+            {isLoading ? (
+                <div className="flex justify-center"><span className="loading loadin-lg"></span></div>
+            ) : expensesError ? (
+                <div className="alert alert-error">{extractApiError(expensesError, "Failed to load expenses")}</div>
             ) : (
                 <div className="overflow-x-auto bg-base-100 rounded-box shadow">
                     <table className="table">
@@ -140,19 +99,25 @@ export default function ExpensesList() {
                             </tr>
                         </thead>
                         <tbody>
-                            {items.map((e) => (
-                                <tr key={e.id}>
-                                    <td>{(e.date || "").slice(0, 10)}</td>
-                                    <td>{e.description}</td>
-                                    <td className="text-right">{formatCurrency(e.amount)}</td>
-                                    <td>{e.categoryName ?? e.categoryId}</td>
+                            {expenses?.map((expense) => (
+                                <tr key={expense.id}>
+                                    <td>{(expense.date).slice(0, 10)}</td>
+                                    <td>{expense.description}</td>
+                                    <td className="text-right">{formatCurrency(expense.amount)}</td>
+                                    <td>{expense.categoryName ?? expense.categoryId}</td>
                                     <td className="flex gap-2 justify-end">
-                                        <button className="btn btn-xs" onClick={() => openEdit(e)}>Edit</button>
-                                        <button className="btn btn-xs btn-error" onClick={() => handleDelete(e)}>Delete</button>
+                                        <button className="btn btn-xs" onClick={() => openEdit(expense)}>Edit</button>
+                                        <button 
+                                            className="btn btn-xs btn-error"
+                                            onClick={() => handleDelete(expense.id)}
+                                            disabled={deleteMutation.isPending && deleteMutation.variables === expense.id}
+                                        >
+                                            Delete
+                                        </button>
                                     </td>
                                 </tr>
                             ))}
-                            {items.length === 0 && (
+                            {expenses?.length === 0 && (
                                 <tr><td colSpan={5} className="text-center opacity-70">No Expenses</td></tr>
                             )}
                         </tbody>
@@ -164,13 +129,13 @@ export default function ExpensesList() {
                 <div className="modal-box">
                     <h3 className="font-bold text-lg mb-2">{title}</h3>
                     <ExpenseForm 
-                        key={editing?.id || `new-${creationCount}`}
-                        initial={editing ?? undefined}
-                        categories={categories}
+                        key={editingExpense?.id || 'new'}
+                        initial={editingExpense ?? undefined}
+                        categories={categories || []}
                         onSubmit={handleSubmit}
                         onCancel={closeDialog}
-                        submitting={submitting}
-                        error={submitError}
+                        submitting={saveMutation.isPending}
+                        error={saveMutation.error ? extractApiError(saveMutation.error, "Save failed") : null}
                     />
                 </div>
                 <form method="dialog" className="modal-backdrop" onClick={closeDialog}><button>close</button></form>

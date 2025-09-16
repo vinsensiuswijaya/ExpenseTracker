@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import type { ExpenseChartPoint } from "../../types/expense";
 import { getExpenseChart } from "../../services/expensesService";
 import { formatCurrency } from "../../utils/format";
@@ -10,39 +11,18 @@ import { extractApiError } from "../../utils/extractApiError";
 Chart.register(CategoryScale);
 
 export default function Charts() {
-    const [items, setItems] = useState<ExpenseChartPoint[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        (async () => {
-            try {
-                setLoading(true);
-                setError(null);
-                const points = await getExpenseChart();
-                setItems(points.map(p => ({
-                    category: p.category,
-                    total: p.total
-                })));
-            } catch (e) {
-                setError(extractApiError(e, "Failed to load data"));
-            } finally {
-                setLoading(false);
-            }
-        })();
-    }, []);
-
-    const byCategory = useMemo(() => {
-        return items.map(e => ({ label: e.category, total: e.total }));
-    }, [items]);
+    const { data: chartData, isLoading, error } = useQuery({
+        queryKey: ['expenseChart'],
+        queryFn: getExpenseChart,
+    });
 
     return (
         <div className="p-4">
             <h1 className="text-2xl font-semibold mb-4">Expense Summary</h1>
-            {loading ? (
+            {isLoading ? (
                 <div className="loading loading-lg" />
             ) : error ? (
-                <div className="alert alert-error">{error}</div>
+                <div className="alert alert-error">{extractApiError(error, "Failed to load data")}</div>
             ) : (
                 <>
                     <div className="overflow-x-auto bg-base-100 rounded-box shadow">
@@ -54,13 +34,13 @@ export default function Charts() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {byCategory.map((row) => (
-                                    <tr key={row.label}>
-                                        <td>{row.label}</td>
+                                {chartData?.map((row) => (
+                                    <tr key={row.category}>
+                                        <td>{row.category}</td>
                                         <td className="text-right">{formatCurrency(row.total)}</td>
                                     </tr>
                                 ))}
-                                {byCategory.length === 0 && (
+                                {chartData?.length === 0 && (
                                     <tr><td colSpan={2} className="text-center opacity-70">No data</td></tr>
                                 )}
                             </tbody>
@@ -68,8 +48,8 @@ export default function Charts() {
                     </div>
                     <div className="chart-container max-w-lg mx-auto mt-8">
                         <Pie data={{
-                            labels: byCategory.map(r => r.label),
-                            datasets: [{ label: "Total", data: byCategory.map(r => r.total) }]
+                            labels: chartData?.map(row => row.category),
+                            datasets: [{ label: "Total", data: chartData?.map(row => row.total) }]
                         }} />
                     </div>
                 </>
