@@ -1,137 +1,126 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { createCategory, deleteCategory, getCategories, updateCategory } from "../../services/categoriesService";
-import type { Category } from "../../types/category";
+import { useRef, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getCategories, createCategory, updateCategory, deleteCategory } from "../../services/categoriesService";
 import CategoryForm from "./CategoryForm";
-import type { CategoryFormValues } from "./CategoryForm";
 import { extractApiError } from "../../utils/extractApiError";
+import type { Category, CreateCategoryDto } from "../../types/category";
 
 export default function CategoriesList() {
-    const [items, setItems] = useState<Category[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [editing, setEditing] = useState<Category | null>(null);
-    const [submitting, setSubmitting] = useState(false);
+    const [isFormOpen, setFormOpen] = useState(false);
+    const [editingCategory, setEditingCategory] = useState<Category | null>(null);
     const [submitError, setSubmitError] = useState<string | null>(null);
-    const [creationCount, setCreationCount] = useState(0);
     const dialogRef = useRef<HTMLDialogElement | null>(null);
 
-    const title = useMemo(() => (editing ? "Edit Category" : "New Category"), [editing]);
+    const queryClient = useQueryClient();
 
-    useEffect(() => {
-        (async () => {
-            try {
-                setLoading(true);
-                setError(null);
-                const data = await getCategories();
-                setItems(data);
-            } catch (e: any) {
-                setError(extractApiError(e, "Failed to load categories"));
-            } finally {
-                setLoading(false);
+    const { data: categories, isLoading, isError, error } = useQuery({
+        queryKey: ['categories'],
+        queryFn: getCategories
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: deleteCategory,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['categories'] });
+        },
+        onError: (err) => {
+            setSubmitError(extractApiError(err, "Failed to delete category"));
+        }
+    });
+
+    const saveMutation = useMutation({
+        mutationFn: async (data: { id?: number, name: CreateCategoryDto }) => {
+            if (data.id) {
+                await updateCategory(data.id, data.name);
+            } else {
+                await createCategory(data.name)
             }
-        })();
-    }, []);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['categories'] });
+            closeForm();
+        },
+        onError: (err) => {
+            setSubmitError(extractApiError(err, "Failed to save category"));
+        }
+    });
 
-    const openCreate = () => {
-        setEditing(null);
-        setCreationCount(c => c + 1);
-        dialogRef.current?.showModal();
+    const handleEdit = (category: Category) => {
+        setEditingCategory(category);
+        setSubmitError(null);
+        setFormOpen(true);
     };
 
-    const openEdit = (c: Category) => {
-        setEditing(c);
-        dialogRef.current?.showModal();
+    const handleAddNew = () => {
+        setEditingCategory(null);
+        setSubmitError(null);
+        setFormOpen(true);
+    };
+
+    const closeForm = () => {
+        setFormOpen(false);
+        setEditingCategory(null);
+        setSubmitError(null);
+    };
+
+    if (isLoading) {
+        return <div className="p-4">Loading categories...</div>;
     }
 
-    const closeDialog = () => {
-        setEditing(null);
-        setSubmitError(null);
-        dialogRef.current?.close();
-    };
-
-    const handleSubmit = async (values: CategoryFormValues) => {
-        setSubmitting(true);
-        setSubmitError(null);
-        try {
-            if (editing) {
-                await updateCategory(editing.id, {name: values.name});
-                setItems((prev) => prev.map((x) => (x.id === editing.id ? {...x, name: values.name} : x)));
-            } else {
-                const created = await createCategory({name: values.name});
-                setItems((prev) => [created, ...prev]);
-            }
-            closeDialog();
-        } catch (e) {
-            setSubmitError(extractApiError(e, "Save Failed"));
-        } finally {
-            setSubmitting(false);
-        }
-    };
-
-    const handleDelete = async (c: Category) => {
-        if (!confirm(`Delete category "${c.name}"?`)) return;
-        try {
-            await deleteCategory(c.id);
-            setItems((prev) => prev.filter((x) => x.id !== c.id));
-        } catch (e) {
-            alert(extractApiError(e, "Delete failed"));
-        }
-    };
+    if (isError) {
+        return <div className="p-4 text-red-500">Error: {error.message}</div>;
+    }
 
     return (
         <div className="p-4">
-            <div className="flex items-center justify-between mb-4">
-                <h1 className="text-2xl font-semibold">Categories</h1>
-                <button className="btn btn-primary" onClick={openCreate}>New Category</button>
+            <div className="flex justify-between items-center mb-4">
+                <h1 className="text-2xl font-bold">Categories</h1>
+                <button className="btn btn-primary" onClick={handleAddNew}>New Category</button>
             </div>
 
-            {loading ? (
-                <div className="loading loading-lg" />
-            ) : error ? (
-                <div className="alert aler-error">{error}</div>
-            ) : (
-                <div className="overflow-x-auto bg-base-100 rounded-box shadow">
-                    <table className="table">
-                        <thead>
-                            <tr>
-                                <th>No.</th>
-                                <th>Name</th>
-                                <th className="w-40" />
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {items.map((c, idx) => (
-                                <tr key={c.id}>
-                                    <td>{idx + 1}</td>
-                                    <td>{c.name}</td>
-                                    <td className="flex gap-2 justify-end">
-                                        <button className="btn btn-xs" onClick={() => openEdit(c)}>Edit</button>
-                                        <button className="btn btn-xs btn-error" onClick={() => handleDelete(c)}>Delete</button>
-                                    </td>
-                                </tr>
-                            ))}
-                            {items.length === 0 && (
-                                <tr><td colSpan={3} className="text-center opacity-70">No Categories</td></tr>
-                            )}
-                        </tbody>
-                    </table>
+            {submitError && <div className="alert alert-error mb-4">{submitError}</div>}
+
+            {isFormOpen && (
+                <div className="mb-4">
+                    <CategoryForm 
+                        initial={editingCategory ?? undefined}
+                        onSubmit={(name) => saveMutation.mutate({ id: editingCategory?.id, name})}
+                        onCancel={closeForm}
+                        submitting={saveMutation.isPending}
+                        error={saveMutation.error ? extractApiError(saveMutation.error) : null}
+                    />
                 </div>
             )}
 
-            <dialog className="modal" ref={dialogRef}>
-                <div className="modal-box">
-                    <h3 className="font-bold text-lg mb-2">{title}</h3>
-                    <CategoryForm 
-                        key={editing?. id || `new-${creationCount}`}
-                        initial={editing ? { name: editing.name } : undefined}
-                        onSubmit={handleSubmit}
-                        onCancel={closeDialog}
-                        submitting={submitting}
-                        error={submitError}
-                    />
-                </div>
-                <form method="dialog" className="modal-backdrop" onClick={closeDialog}><button>close</button></form>
-            </dialog>
+            <div className="overflow-x-auto bg-base-100 rounded-box shadow">
+                <table className="table">
+                    <thead>
+                        <tr>
+                            <th className="w-20">No.</th>
+                            <th>Name</th>
+                            <th className="w-40" />
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {categories?.map((category, idx) => (
+                            <tr key={category.id}>
+                                <td>{idx + 1}</td>
+                                <td>{category.name}</td>
+                                <td className="flex gap-2 justify-end">
+                                    <button className="btn btn-sm" onClick={() => handleEdit(category)}>Edit</button>
+                                    <button
+                                        className="btn btn-sm btn-error ml-2"
+                                        onClick={() => deleteMutation.mutate(category.id)}
+                                        disabled={deleteMutation.isPending && deleteMutation.variables === category.id}
+                                    >
+                                        Delete
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
         </div>
-    );
+    )
 }
